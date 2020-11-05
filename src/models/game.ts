@@ -3,4 +3,5 @@ export class Game {
     host: string;
     players: string[];
     running: boolean;
+    mode: string;
 }

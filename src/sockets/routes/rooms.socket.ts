@@ -18,28 +18,44 @@ export function rooms(socket) {
         }
     });
 
-    socket.on('LOBBY_HOST_GAME', async () => {
+    socket.on('LOBBY_HOST_GAME', async (mode) => {
         const game = new Game()
         game.id = uuidv4();
         game.host = SocketHandler.connectionPlayerMap.get(socket);
         game.players = [game.host];
         game.running = false;
+        game.mode = mode;
         socket.join(game.id);
         SocketHandler.games.push(game);
         SocketHandler.broadcast('LOBBY_GAMES', SocketHandler.games);
     });
 
     socket.on('LOBBY_JOIN_GAME', (id) => {
-        console.log('1');
         const player = SocketHandler.connectionPlayerMap.get(socket);
         for (const game of SocketHandler.games) {
-            console.log('1');
             if (game.id === id && player !== game.host) {
                 game.players.push(player);
-                console.log("heyheyhey")
                 socket.join(game.id);
                 SocketHandler.io.to(game.id).emit('LOBBY_JOIN_GAME', game);
             }
         }
-    })
+    });
+
+    socket.on('LOBBY_LEAVE_GAME', (id) => {
+        const player = SocketHandler.connectionPlayerMap.get(socket);
+        SocketHandler.removePlayerFromGames(player);
+        const game = SocketHandler.getGameById(id);
+        console.log(game);
+        SocketHandler.io.to(game.id).emit('LOBBY_GAME', game);
+        socket.leave(game.id);
+    });
+
+    socket.on('LOBBY_START_GAME', (id) => {
+        const player = SocketHandler.connectionPlayerMap.get(socket);
+        const game = SocketHandler.getGameById(id);
+        if (player === game.host) {
+            game.running = true;
+            SocketHandler.io.to(game.id).emit("LOBBY_START_GAME", game);
+        }
+    });
 }

@@ -54,6 +54,14 @@ export class SocketHandler {
         }
     }
 
+    static getGameById(id: string): Game {
+        for (const game of this.games) {
+            if (game.id === id) {
+                return game;
+            }    
+        }
+    }
+
     static closeGame(game: Game): void {
         for (const player of game.players) {
             this.playerConnectionMap.get(player).emit('GAME_CLOSED', game.id);
